@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<script>
+    function removeAreaNode(e) {
+        let area = e.target.parentElement.parentElement.parentElement.querySelector(".selected_area")
+        document.querySelector("#list_group_area_" + area.id.split("_")[1]).remove()
+        e.target.parentElement.parentElement.parentElement.remove()
+    }
+
+    function addAreaNode(e) {
+        // let area = e.target.parentElement.parentElement.parentElement.querySelector(".selected_area")
+        // document.querySelector("#list_group_area_" + area.id.split("_")[1]).remove()
+        // e.target.parentElement.parentElement.parentElement.remove()
+    }
+
+    async function getListOfCheckboxesByEvent(event) {
+        let json = {"id": Number(event.target.id.split("_")[1])}
+        getListOfCheckboxes(json)
+    }
+
+    async function getListOfCheckboxesById(id) {
+        let json = {"id": id}
+        getListOfCheckboxes(json)
+    }
+
+    async function getListOfCheckboxes(json) {
+        let response = await fetch('/api/get_area_checkboxes', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(json)
+        })
+        let responseJson = await response.text()
+        console.log(responseJson)
+        responseJson = JSON.parse(responseJson)
+
+        responseJson["checkboxes"].forEach((elem) => {
+            console.log(elem)
+        })
+        updateList(responseJson["checkboxes"])
+    }
+
+    function updateList(list) {
+        let listGroup = document.querySelector(".list-group")
+        listGroup.innerHTML = ""
+        list.forEach((element) => {
+            listGroup.insertAdjacentHTML('afterbegin',
+                '        <li class="list-group-item" id="checkbox_"' + element["id"] + '>' + element["text"] + '</li>\n')
+        })
+    }
+
+    function activeList(e) {
+        e.preventDefault()
+        console.log(e)
+        console.log(e.target.classList)
+        let area = e.target.parentElement.parentElement.parentElement.querySelector(".selected_area")
+        area.innerHTML = e.target.innerHTML
+        getListOfCheckboxesById(Number(e.target.id.split("_")[2]))
+        // Очищать список чекбоксов
+    }
+
+    // document.addEventListener('click', activeList(event));
+
+</script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/min.css') }}"/>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+
+<div class="d-flex justify-content-center box">
+    {% for area_link in area_links %}
+    <div class="btn-group dropdown-center d-flex justify-content-center box">
+        <button type="button" class="btn btn-danger selected_area dropdown-toggle-split" data-bs-toggle="dropdown"
+                aria-expanded="false" id={{"area_" + area_link[
+        "id"]|string}}>{{area_link["name"]}}
+        <span class="visually-hidden">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu">
+            {% for i in range (areas_length) %}
+            <li><a class="dropdown-item" onclick="activeList(event)" id={{"area_menu_" + areas[i]['id']|string}}
+                href="#">{{areas[i]["name"]}}</a></li>
+            {% endfor %}
+        </ul>
+        <button type="button" class="btn btn-danger dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown"
+                aria-expanded="false">
+            <span class="visually-hidden">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" onclick="removeAreaNode(event)" href="#">Удалить</a></li>
+        </ul>
+    </div>
+    {% endfor %}
+    <div class="btn-group dropdown-center d-flex justify-content-center box">
+        <button type="button" class="btn btn-danger selected_area dropdown-toggle" data-bs-toggle="dropdown"
+                aria-expanded="false" id="area_add">Добавить
+            <span class="visually-hidden">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu">
+            {% for i in range (areas_length) %}
+            <li><a class="dropdown-item" onclick="activeList(event)" id={{"area_menu_" + areas[i]['id']|string}}
+                href="#">{{areas[i]["name"]}}</a></li>
+            {% endfor %}
+            <li>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+                    Добавить
+                </button>
+            </li>
+            <!-- Button trigger modal -->
+
+        </ul>
+    </div>
+
+</div>
+
+<div class="d-flex flex-column justify-content-center list-group">
+    {% for area in area_links %}
+    <div id={{"list_group_area_" + area[
+    "id"]|string}} class="d-flex flex-column justify-content-center list-group">
+    <p class=" d-flex justify-content-center">{{area["name"]}}</p>
+    {% for checkbox in area.checkboxes %}
+    <!--<div class="flex-column justify-content-center">-->
+
+    <button type="button" class="btn btn-danger dropdown-toggle box" data-bs-toggle="dropdown" aria-expanded="false">
+        {{checkbox.checkbox["text"]}}
+        <span class="visually-hidden">Toggle Dropdown</span>
+    </button>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="#">Удалить</a></li>
+    </ul>
+    {% endfor %}
+</div>
+
+<!--</div>-->
+{% endfor %}
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+     aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="staticBackdropLabel">Modal title</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="/api/create/area" method="post">
+                    <div class="form-group">
+                        <label for="exampleInputEmail1">Название</label>
+                        <input name="name" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp"
+                               placeholder="Название">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+</body>
+</html>
