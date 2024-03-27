@@ -2,14 +2,15 @@ from init import db
 from models.models import Checkbox
 
 
-def create_checkbox(data):
+def add_checkbox(data):
     last_checkbox_id = 0
     if Checkbox.query.first():
         last_checkbox_id = Checkbox.query.order_by(Checkbox.id.desc()).first().id
-    checkbox = Checkbox(id=last_checkbox_id + 1, text=data["text"], count=data["count"], select=data["select"])
+        checkbox_id = last_checkbox_id + 1
+    checkbox = Checkbox(id=checkbox_id, text=data["text"], count=data["count"], select=False)
     db.session.add(checkbox)
     db.session.commit()
-    return "ok"
+    return checkbox_id
 
 
 def delete_checkbox(data):

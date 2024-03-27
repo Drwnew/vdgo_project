@@ -1,25 +1,27 @@
+import json
+
 from flask import request, render_template
 
-from api.area import create_area, delete_area, update_area, get_area_checkboxes, get_area_links
-from api.checkbox import create_checkbox, delete_checkbox, update_checkbox
+from api.area import add_area, delete_area, update_area, get_area_checkboxes
+from api.area_checkbox import delete_area_checkbox, add_area_checkbox
+from api.checkbox import add_checkbox, delete_checkbox, update_checkbox
 from init import app, db
-from models.models import Area_Checkbox, Area
+from models.models import Area_Checkbox, Area, Checkbox
 
 
-@app.route('/api/create/area', methods=['POST'])
+@app.route('/api/create', methods=['POST'])
 def create_instance():
-    data = request.form['name']
-    # data = request.get_json():
-    return create_area(data)
-
-# @app.route('/api/create', methods=['POST'])
-# def create_instance():
-#     data = request.form['name']
-#     # data = request.get_json()
-#     if data["instance"] == "area":
-#         return create_area(data)
-#     elif data["instance"] == "checkbox":
-#         return create_checkbox(data)
+    # data = request.form['name']
+    data = request.get_json()
+    if data["instance"] == "area":
+        return add_area(data)
+    elif data["instance"] == "checkbox":
+        checkbox_id = add_checkbox(data)
+        data = json.dumps({"area_id": int(data["area_id"]), "checkbox_id": checkbox_id})
+        return add_area_checkbox(data)
+    elif data["instance"] == "link":
+        return add_area_checkbox(data)
+    return "Invalid input"
 
 @app.route('/api/delete', methods=['POST'])
 def delete_instance():
@@ -28,6 +30,9 @@ def delete_instance():
         return delete_area(data)
     elif data["instance"] == "checkbox":
         return delete_checkbox(data)
+    elif data["instance"] == "link":
+        return delete_area_checkbox(data)
+    return "err"
 
 @app.route('/api/update', methods=['POST'])
 def update_instance():
@@ -53,15 +58,16 @@ def api_get_area_checkboxes():
 
 @app.route("/admin")
 def setting_page():
-    first = Area.query.first()
+    # first = Area.query.first()
     areas = Area.query.all()
-    area_links = get_area_links(first.id)
+    area_links = areas
+    checkboxes = Checkbox.query.all()
     # area_checkboxes = []
     # for area in area_links:
     #     checkboxes = area.checkboxes.checkboxes
     #     area_checkboxes.append({area, ch})
     return render_template('admin.html', area_links=area_links, area_links_length=len(area_links),
-    areas=areas, areas_length=len(areas))
+    areas=areas, areas_length=len(areas), checkboxes=checkboxes)
 
 if __name__ == '__main__':
   with app.app_context():

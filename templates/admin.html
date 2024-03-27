@@ -7,17 +7,86 @@
 <body>
 
 <script>
-    function removeAreaNode(e) {
+    var select_checkbox_area_id = null
+    async function removeArea(e) {
         let area = e.target.parentElement.parentElement.parentElement.querySelector(".selected_area")
-        document.querySelector("#list_group_area_" + area.id.split("_")[1]).remove()
-        e.target.parentElement.parentElement.parentElement.remove()
-    }
-
-    function addAreaNode(e) {
-        // let area = e.target.parentElement.parentElement.parentElement.querySelector(".selected_area")
+        let json = {"instance": "area", "id": Number(area.id.split("_")[1])}
         // document.querySelector("#list_group_area_" + area.id.split("_")[1]).remove()
         // e.target.parentElement.parentElement.parentElement.remove()
+        let response = await fetch('/api/delete', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(json)
+        })
+        let responseJson = await response.text()
+        console.log(responseJson)
+        window.location.replace("/admin")
     }
+
+    async function addArea(e) {
+        let input = e.target.parentElement.parentElement.querySelector("input")
+        let json = {"instance": "area", "name": input.value}
+
+        let response = await fetch('/api/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(json)
+        })
+        let responseJson = await response.text()
+        console.log(responseJson)
+        window.location.replace("/admin")
+    }
+
+    async function removeCheckbox(e) {
+
+        let area_id = e.target.parentElement.parentElement.parentElement.id.split("_")[3]
+        let checkbox_id = e.target.id.split("_")[2]
+        let json = {"instance": "link", "area_id": area_id, "checkbox_id": checkbox_id}
+        let response = await fetch('/api/delete', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(json)
+        })
+        let responseJson = await response.text()
+        console.log(responseJson)
+        window.location.replace("/admin")
+    }
+
+    function selectCheckbox(e){
+        select_checkbox_area_id = e.target.id.split("_")[3]
+    }
+
+    async function addCheckbox(e){
+        let form = e.target.parentElement.parentElement
+        let input = form.querySelectorAll("input")
+        let json = {"instance": "checkbox", "text":input[0].value, "count": input[1].checked, "area_id": select_checkbox_area_id}
+        let response = await fetch('/api/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(json)
+        })
+        let responseJson = await response.text()
+        console.log(responseJson)
+        window.location.replace("/admin")
+
+    }
+
+
+    async function linkAreaCheckbox(e){
+        let checkbox_id = e.target.id.split("_")[2]
+        let area_id = select_checkbox_area_id
+        let json = {"instance": "link", "area_id": area_id, "checkbox_id": checkbox_id}
+        let response = await fetch('/api/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(json)
+        })
+        let responseJson = await response.text()
+        console.log(responseJson)
+        window.location.replace("/admin")
+
+    }
+
 
     async function getListOfCheckboxesByEvent(event) {
         let json = {"id": Number(event.target.id.split("_")[1])}
@@ -77,95 +146,129 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
 
-<div class="d-flex justify-content-center box">
+<div class="d-flex justify-content-center flex-wrap box">
     {% for area_link in area_links %}
-    <div class="btn-group dropdown-center d-flex justify-content-center box">
-        <button type="button" class="btn btn-danger selected_area dropdown-toggle-split" data-bs-toggle="dropdown"
-                aria-expanded="false" id={{"area_" + area_link[
+    <div class="d-flex justify-content-center box">
+        <button class="btn btn-secondary selected_area" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false" id={{"area_" + area_link[
         "id"]|string}}>{{area_link["name"]}}
-        <span class="visually-hidden">Toggle Dropdown</span>
         </button>
         <ul class="dropdown-menu">
-            {% for i in range (areas_length) %}
-            <li><a class="dropdown-item" onclick="activeList(event)" id={{"area_menu_" + areas[i]['id']|string}}
-                href="#">{{areas[i]["name"]}}</a></li>
-            {% endfor %}
-        </ul>
-        <button type="button" class="btn btn-danger dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown"
-                aria-expanded="false">
-            <span class="visually-hidden">Toggle Dropdown</span>
-        </button>
-        <ul class="dropdown-menu">
-            <li><a class="dropdown-item" onclick="removeAreaNode(event)" href="#">Удалить</a></li>
+            <li><a class="dropdown-item" onclick="removeArea(event)" href="#">Удалить</a></li>
         </ul>
     </div>
     {% endfor %}
-    <div class="btn-group dropdown-center d-flex justify-content-center box">
-        <button type="button" class="btn btn-danger selected_area dropdown-toggle" data-bs-toggle="dropdown"
-                aria-expanded="false" id="area_add">Добавить
-            <span class="visually-hidden">Toggle Dropdown</span>
+    <div class="d-flex justify-content-center box">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addArea">
+            Добавить
         </button>
-        <ul class="dropdown-menu">
-            {% for i in range (areas_length) %}
-            <li><a class="dropdown-item" onclick="activeList(event)" id={{"area_menu_" + areas[i]['id']|string}}
-                href="#">{{areas[i]["name"]}}</a></li>
-            {% endfor %}
-            <li>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
-                    Добавить
-                </button>
-            </li>
-            <!-- Button trigger modal -->
-
-        </ul>
     </div>
 
 </div>
 
 <div class="d-flex flex-column justify-content-center list-group">
     {% for area in area_links %}
-    <div id={{"list_group_area_" + area[
+    <div class="dropdown-center list-group" id={{"list_group_area_" + area[
     "id"]|string}} class="d-flex flex-column justify-content-center list-group">
     <p class=" d-flex justify-content-center">{{area["name"]}}</p>
     {% for checkbox in area.checkboxes %}
     <!--<div class="flex-column justify-content-center">-->
 
-    <button type="button" class="btn btn-danger dropdown-toggle box" data-bs-toggle="dropdown" aria-expanded="false">
+    <button type="button" class="btn btn-danger box" data-bs-toggle="dropdown" aria-expanded="false">
         {{checkbox.checkbox["text"]}}
         <span class="visually-hidden">Toggle Dropdown</span>
     </button>
     <ul class="dropdown-menu">
-        <li><a class="dropdown-item" href="#">Удалить</a></li>
+        <li><a class="dropdown-item justify-content-center" id={{"checkbox_button_" + checkbox.checkbox["id"]|string}} onclick="removeCheckbox(event)"  href="#">Удалить</a></li>
     </ul>
     {% endfor %}
+    <div class="d-flex justify-content-center box">
+        <button onclick="selectCheckbox(event)" type="button" class="btn btn-primary margin" data-bs-toggle="modal" data-bs-target="#selectCheckbox" id={{"area_checkbox_select_" + area["id"]|string}}>
+            Выбрать
+        </button>
+        <button onclick="selectCheckbox(event)" type="button" class="btn btn-primary margin" data-bs-toggle="modal" data-bs-target="#addCheckbox" id={{"area_checkbox_add_" + area["id"]|string}}>
+            Добавить
+        </button>
+    </div>
 </div>
-
-<!--</div>-->
 {% endfor %}
-</div>
 
-<!-- Modal -->
-<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+
+<!-- Modal Add area-->
+<div class="modal fade" id="addArea" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
      aria-labelledby="staticBackdropLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="staticBackdropLabel">Modal title</h1>
+                <h5 class="modal-title" id="addAreaLabel">Modal title</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form action="/api/create/area" method="post">
-                    <div class="form-group">
-                        <label for="exampleInputEmail1">Название</label>
-                        <input name="name" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp"
-                               placeholder="Название">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                </form>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" placeholder="Наименование объекта"
+                           aria-label="name">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="addArea(event)">
+                    Добавить
+                </button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Modal Add checkbox-->
+<div class="modal fade" id="addCheckbox" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+     aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCheckboxLabel">Modal title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" placeholder="Текст"
+                           aria-label="text">
+                    <div class="input-group mb-3">
+                        <div class="input-group-text">
+                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                   aria-label="Checkbox for following text input">
+                        </div>
+                        <span class="input-group-text">Счётное</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="addCheckbox(event)">
+                    Добавить
+                </button>
+            </div>
+        </div>
+    </div>
+        </div>
+
+<!-- Modal Select checkbox-->
+        <div class="modal fade" id="selectCheckbox" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+             aria-labelledby="staticBackdropLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="selectCheckboxLabel">Modal title</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="list-group">
+                            {% for checkbox in checkboxes %}
+                                <button onclick="linkAreaCheckbox(event)" type="button" class="list-group-item list-group-item-action" id={{"select_checkbox_" + checkbox["id"]|string}}>{{checkbox["text"]}}</button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
 </div>
 
 </body>

@@ -1,11 +1,12 @@
 import json
 
 from init import db
-from models.models import Area
+from models.models import Area, Checkbox, Area_Checkbox
 
 
-def create_area(name):
+def add_area(data):
     """In data should be param name"""
+    name = data["name"]
     last_area = 0
     if Area.query.first():
         last_area = int(Area.query.order_by(Area.id.desc()).first().id) + 1

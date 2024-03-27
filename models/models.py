@@ -48,11 +48,3 @@ class Checkbox(db.Model):
     @property
     def get_obj(self):
         return {"id": self.id, "text": self.text, "count": self.count, "select": self.select}
-
-
-# class Connection(db.Model):
-#     __table_args__ = (
-#         PrimaryKeyConstraint('area_id', 'checkbox_id'),
-#     )
-#     area_id = db.Column(db.Integer(), db.ForeignKey('area.id'))
-#     checkbox_id = db.Column(db.Integer(), db.ForeignKey('checkbox.id'))
